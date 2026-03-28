@@ -132,20 +132,25 @@ export default function DashboardPage() {
         viewingPub
       );
 
-      // Combine Step 1 (Send MON) and Step 2 (Announce) into ONE single transaction
-      const hash = await walletClient.writeContract({
+      // Step 1: Send MON directly to the stealth address (plain transfer)
+      const sendHash = await walletClient.sendTransaction({
+        to: stealthAddress as `0x${string}`,
+        value: parseEther(amount),
+      });
+
+      // Step 2: Announce the stealth payment on the registry contract
+      await walletClient.writeContract({
         address: REGISTRY_ADDRESS as `0x${string}`,
         abi: STEALTH_REGISTRY_ABI,
-        functionName: "sendAndAnnounce",
+        functionName: "announce",
         args: [
           stealthAddress as `0x${string}`,
           ephemeralPublicKey as `0x${string}`,
           "0x" as `0x${string}`,
         ],
-        value: parseEther(amount),
       });
 
-      setTxHash(hash);
+      setTxHash(sendHash);
       setRecipient("");
       setAmount("");
     } catch (err: any) {
