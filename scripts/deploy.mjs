@@ -1,41 +1,79 @@
-import { createWalletClient, createPublicClient, http, defineChain } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { readFileSync } from "fs";
+import fs from "fs";
+import { ethers } from "ethers";
 import solc from "solc";
 
-const monadTestnet = defineChain({
-  id: 10143,
-  name: "Monad Testnet",
-  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
-  rpcUrls: { default: { http: ["https://testnet-rpc.monad.xyz"] } },
-});
+const RPC_URL = "https://testnet-rpc.monad.xyz";
 
-const privateKey = process.argv[2];
-const account = privateKeyToAccount(privateKey.startsWith("0x") ? privateKey : `0x${privateKey}`);
-console.log(`🔑 Deploying from: ${account.address}`);
+async function main() {
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  const wallet = ethers.Wallet.createRandom(provider);
 
-const source = readFileSync("../contracts/StealthRegistry.sol", "utf8");
-const input = JSON.stringify({
-  language: "Solidity",
-  sources: { "StealthRegistry.sol": { content: source } },
-  settings: { outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } } },
-});
+  fs.writeFileSync("address.txt", wallet.address);
+  
+  console.log("==========================================");
+  console.log(`NEW BURNER Address: ${wallet.address}`);
+  console.log("==========================================");
+  console.log("Waiting for user gas...");
+  
+  // Wait until the burner gets 0.05 or whatever from the user
+  let balance = 0n;
+  while (true) {
+    try {
+      balance = await provider.getBalance(wallet.address);
+      if (balance > 0n) {
+        console.log(`\n[+] Gas received! Balance: ${ethers.formatEther(balance)} MON`);
+        break;
+      }
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 2000)); // check every 2s
+  }
 
-console.log("Compiling...");
-const output = JSON.parse(solc.compile(input));
-const contract = output.contracts["StealthRegistry.sol"]["StealthRegistry"];
-const abi = contract.abi;
-const bytecode = `0x${contract.evm.bytecode.object}`;
+  console.log("[2] Reading and Compiling StealthRegistry.sol...");
+  const source = fs.readFileSync("contracts/StealthRegistry.sol", "utf8");
+  
+  const input = {
+    language: "Solidity",
+    sources: {
+      "StealthRegistry.sol": { content: source }
+    },
+    settings: {
+      outputSelection: { "*": { "*": ["*"] } }
+    }
+  };
 
-const publicClient = createPublicClient({ chain: monadTestnet, transport: http() });
-const walletClient = createWalletClient({ chain: monadTestnet, transport: http(), account });
+  const output = JSON.parse(solc.compile(JSON.stringify(input)));
+  
+  if (output.errors) {
+    const critical = output.errors.filter(e => e.severity === 'error');
+    if (critical.length > 0) throw new Error("Compilation Error:" + JSON.stringify(critical));
+  }
 
-const balance = await publicClient.getBalance({ address: account.address });
-console.log(`💰 Balance: ${Number(balance) / 1e18} MON`);
+  const contract = output.contracts["StealthRegistry.sol"]["StealthRegistry"];
+  const bytecode = contract.evm.bytecode.object;
+  const abi = contract.abi;
 
-console.log("🚀 Deploying...");
-const hash = await walletClient.deployContract({ abi, bytecode, account });
-console.log(`📝 Transaction hash: ${hash}`);
+  console.log("[3] Deploying to Monad Testnet...");
+  const factory = new ethers.ContractFactory(abi, bytecode, wallet);
+  
+  const deployTx = await factory.deploy();
+  console.log(`[+] Broadcasted TX: ${deployTx.deploymentTransaction().hash}`);
+  
+  await deployTx.waitForDeployment();
+  const address = await deployTx.getAddress();
+  
+  console.log(`[SUCCESS] Contract deployed to: ${address}`);
+  
+  // Auto-patch the repo
+  console.log("[4] Patching frontend...");
+  let contractsTs = fs.readFileSync("lib/contracts.ts", "utf8");
+  contractsTs = contractsTs.replace(
+    /export const REGISTRY_ADDRESS\s*=\s*".*?" as const;/,
+    `export const REGISTRY_ADDRESS =\n  "${address}" as const;`
+  );
+  fs.writeFileSync("lib/contracts.ts", contractsTs);
+  
+  console.log("ALL DONE! Ready for git push!");
+  process.exit(0);
+}
 
-const receipt = await publicClient.waitForTransactionReceipt({ hash });
-console.log(`✅ Deployed at: ${receipt.contractAddress}`);
+main().catch(console.error);
