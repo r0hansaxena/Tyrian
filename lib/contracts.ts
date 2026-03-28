@@ -29,6 +29,6 @@ export const STEALTH_REGISTRY_ABI = [
  * IMPORTANT: Replace with your deployed contract address on Monad Testnet.
  */
 export const REGISTRY_ADDRESS =
-  "0x3354b093Dc82Da01955b3ba1577dC815A97ffD99" as const;
+  "0x9d715a84bedc547ee1854abd37397aaca603de45" as const;
 
 export const MONAD_EXPLORER = "https://testnet.monadexplorer.com";
