@@ -126,40 +126,27 @@ export default function DashboardPage() {
         viewingPub
       );
 
-      // Step 1: Send MON directly to the stealth address using raw provider
+      // Step 1 & 2: Send MON and Announce stealth payment atomically via the registry
       const weiValue = parseEther(amount);
-      const hexValue = "0x" + weiValue.toString(16);
-      console.log("[Tyrian] Sending MON:", { amount, weiValue: weiValue.toString(), hexValue, stealthAddress });
-      alert(`Sending ${amount} MON (${hexValue} wei) to stealth address ${stealthAddress}`);
-
-      const sendHash = await provider.request({
-        method: "eth_sendTransaction",
-        params: [{
-          from: embeddedWallet.address,
-          to: stealthAddress,
-          value: hexValue,
-        }],
-      });
-      console.log("[Tyrian] Transfer tx hash:", sendHash);
-
-      // Step 2: Announce the stealth payment on the registry contract
-      const walletClient2 = createWalletClient({
+      const walletClient = createWalletClient({
         chain: monadTestnet,
         transport: custom(provider),
         account: embeddedWallet.address as `0x${string}`,
       });
-      await walletClient2.writeContract({
+      
+      const hash = await walletClient.writeContract({
         address: REGISTRY_ADDRESS as `0x${string}`,
         abi: STEALTH_REGISTRY_ABI,
-        functionName: "announce",
+        functionName: "sendAndAnnounce",
         args: [
           stealthAddress as `0x${string}`,
           ephemeralPublicKey as `0x${string}`,
           "0x" as `0x${string}`,
         ],
+        value: weiValue,
       });
 
-      setTxHash(sendHash);
+      setTxHash(hash);
       setRecipient("");
       setAmount("");
     } catch (err: any) {
