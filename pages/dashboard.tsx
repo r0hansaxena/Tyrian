@@ -64,6 +64,7 @@ export default function DashboardPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [registerTxHash, setRegisterTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
 
@@ -155,6 +156,8 @@ export default function DashboardPage() {
         setError("Transaction rejected.");
       } else if (msg.includes("insufficient")) {
         setError("Insufficient MON balance.");
+      } else if (msg.includes("not registered") || msg.includes("Stealth Profile")) {
+        setError("The recipient hasn't registered their Stealth Profile yet. Ask them to click \"Register Key\" in their Private Inbox first.");
       } else {
         setError(msg.length > 120 ? msg.slice(0, 120) + "..." : msg);
       }
@@ -195,8 +198,7 @@ export default function DashboardPage() {
           keys.viewingPublicKey as `0x${string}`,
         ],
       });
-      setTxHash(hash);
-      setTimeout(() => alert("Profile Registration submitted to Monad!"), 500);
+      setRegisterTxHash(hash);
     } catch (err: any) {
       console.error(err);
       setError("Registration failed: " + (err.message || "Unknown error"));
@@ -492,6 +494,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex flex-col gap-2">
                   <button
                     onClick={handleRegisterProfile}
                     disabled={isRegistering || !walletReady}
@@ -504,6 +507,17 @@ export default function DashboardPage() {
                     )}
                     {isRegistering ? "Registering..." : "Register Key"}
                   </button>
+                  {registerTxHash && (
+                    <a
+                      href={`${MONAD_EXPLORER}/tx/${registerTxHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-medium text-green-600 hover:underline text-center"
+                    >
+                      ✅ Profile registered →
+                    </a>
+                  )}
+                  </div>
                   <button
                     onClick={handleScanNetwork}
                     disabled={isScanning || !walletReady}
