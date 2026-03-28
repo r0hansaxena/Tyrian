@@ -168,6 +168,7 @@ export default function DashboardPage() {
 
   const [scannedPayments, setScannedPayments] = useState<any[] | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
 
   const handleRegisterProfile = async () => {
     if (!embeddedWallet) return;
@@ -233,9 +234,8 @@ export default function DashboardPage() {
       //    (Monad RPC limits eth_getLogs to a 100-block range per request)
       const CHUNK = 100n;
       const latestBlock = await publicClient.getBlockNumber();
-      // Contract deployed relatively recently — start from a reasonable origin.
-      // Adjust CONTRACT_DEPLOY_BLOCK if you know the exact block number.
-      const CONTRACT_DEPLOY_BLOCK = 0n;
+      // Start from the contract's actual deployment block — not block 0.
+      const CONTRACT_DEPLOY_BLOCK = 21758805n;
 
       const announcementEvent = {
         type: "event" as const,
@@ -248,7 +248,9 @@ export default function DashboardPage() {
         ],
       };
 
+      const totalBlocks = latestBlock - CONTRACT_DEPLOY_BLOCK;
       const logs: any[] = [];
+      setScanProgress(0);
       for (let from = CONTRACT_DEPLOY_BLOCK; from <= latestBlock; from += CHUNK) {
         const to = from + CHUNK - 1n < latestBlock ? from + CHUNK - 1n : latestBlock;
         const chunk = await publicClient.getLogs({
@@ -258,7 +260,10 @@ export default function DashboardPage() {
           toBlock: to,
         });
         logs.push(...chunk);
+        const pct = Number(((from - CONTRACT_DEPLOY_BLOCK) * 100n) / totalBlocks);
+        setScanProgress(pct);
       }
+      setScanProgress(100);
 
       // 4. Decrypt / Scan logs
       const found: any[] = [];
@@ -528,7 +533,7 @@ export default function DashboardPage() {
                     ) : (
                       <Search className="w-4 h-4" />
                     )}
-                    {isScanning ? "Scanning..." : "Scan Network"}
+                    {isScanning ? `Scanning... ${scanProgress}%` : "Scan Network"}
                   </button>
                 </div>
               </div>
