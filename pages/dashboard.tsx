@@ -68,7 +68,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
 
-  const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
+  const embeddedWallet = wallets.find((w) => w.walletClientType === "metamask") || wallets.find((w) => w.walletClientType !== "privy") || wallets[0];
 
   useEffect(() => {
     if (ready && !authenticated) {
