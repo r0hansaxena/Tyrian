@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SpectraPay | Monad Stealth Payments",
+  title: "Tyrian | Monad Stealth Payments",
   description: "The privacy-first payment protocol native to Monad.",
 };
 

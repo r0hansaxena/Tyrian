@@ -39,7 +39,7 @@ export function ReceivedPayments() {
     try {
       // Sign a message to derive stealth keys deterministically
       const signature = await signMessageAsync({
-        message: "SpectraPay: Derive stealth keys for " + address,
+        message: "Tyrian: Derive stealth keys for " + address,
       });
 
       const keys = deriveStealthKeys(signature);

@@ -9,7 +9,7 @@ const projectId =
   "00000000000000000000000000000000"; // placeholder — WC won't work without a real ID
 
 export const config = getDefaultConfig({
-  appName: "SpectraPay",
+  appName: "Tyrian",
   projectId,
   chains: [monadTestnet],
   transports: {
