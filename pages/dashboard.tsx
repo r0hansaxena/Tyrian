@@ -170,6 +170,7 @@ export default function DashboardPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [sweepingId, setSweepingId] = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   const handleSweep = async (payment: any) => {
     if (!embeddedWallet) return;
@@ -259,7 +260,7 @@ export default function DashboardPage() {
   const handleScanNetwork = async () => {
     if (!embeddedWallet) return;
     setIsScanning(true);
-    setError(null);
+    setScanError(null);
     try {
       const provider = await embeddedWallet.getEthereumProvider();
       const walletClient = createWalletClient({
@@ -302,8 +303,29 @@ export default function DashboardPage() {
       const logs: any[] = [];
       setScanProgress(0);
 
-      // Fetch in concurrent batches to drop execution time to seconds
-      const BATCH_SIZE = 100;
+      const fetchLogsWithRetry = async (from: bigint, to: bigint, retries = 3): Promise<any> => {
+        for (let r = 0; r < retries; r++) {
+          try {
+            return await publicClient.getLogs({
+              address: REGISTRY_ADDRESS as `0x${string}`,
+              event: announcementEvent,
+              fromBlock: from,
+              toBlock: to,
+            });
+          } catch (e: any) {
+            if (e.message?.includes("429") || r === retries - 1) {
+              if (r === retries - 1) throw e;
+              await new Promise(res => setTimeout(res, 1000 * (r + 1))); // Exp backoff
+            } else {
+              throw e;
+            }
+          }
+        }
+        return [];
+      };
+
+      // Fetch in concurrent batches to drop execution time but avoid 429
+      const BATCH_SIZE = 20;
       let chunksProcessed = 0;
 
       for (let i = 0; i < totalChunks; i += BATCH_SIZE) {
@@ -311,14 +333,7 @@ export default function DashboardPage() {
         for (let j = 0; j < BATCH_SIZE && i + j < totalChunks; j++) {
           const from = CONTRACT_DEPLOY_BLOCK + BigInt(i + j) * CHUNK;
           const to = from + CHUNK - 1n < latestBlock ? from + CHUNK - 1n : latestBlock;
-          batchPromises.push(
-            publicClient.getLogs({
-              address: REGISTRY_ADDRESS as `0x${string}`,
-              event: announcementEvent,
-              fromBlock: from,
-              toBlock: to,
-            })
-          );
+          batchPromises.push(fetchLogsWithRetry(from, to, 3));
         }
 
         const batchResults = await Promise.all(batchPromises);
@@ -328,6 +343,8 @@ export default function DashboardPage() {
 
         chunksProcessed += batchPromises.length;
         setScanProgress(Math.floor((chunksProcessed / totalChunks) * 100));
+        // Small delay between batches to respect rate logic
+        await new Promise(r => setTimeout(r, 150));
       }
       setScanProgress(100);
 
@@ -370,7 +387,7 @@ export default function DashboardPage() {
       setScannedPayments(found.reverse());
     } catch (err: any) {
       console.error(err);
-      setError("Failed to scan: " + (err.message || "Unknown error"));
+      setScanError("Failed to scan: " + (err.message || "Unknown error"));
     } finally {
       setIsScanning(false);
     }
@@ -604,6 +621,13 @@ export default function DashboardPage() {
                   </button>
                 </div>
               </div>
+
+              {scanError && (
+                <div className="flex items-center gap-2 px-4 py-3 mb-6 rounded-2xl bg-red-50 border border-red-100">
+                  <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                  <p className="text-sm font-medium text-red-700 break-words">{scanError.substring(0, 150)}{scanError.length > 150 ? "..." : ""}</p>
+                </div>
+              )}
 
               {scannedPayments === null ? (
                 <div className="flex items-center gap-3 p-5 rounded-2xl bg-blue-50 border border-blue-100 mb-4">
