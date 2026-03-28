@@ -31,7 +31,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
-        <link rel="icon" href="/favicons/favicon.ico" sizes="any" />
+
         <title>Tyrian | Stealth Payments on Monad</title>
         <meta
           name="description"
