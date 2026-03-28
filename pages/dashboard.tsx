@@ -227,22 +227,36 @@ export default function DashboardPage() {
       // 2. Derive viewing & spending keys
       const keys = deriveStealthKeys(rootPrivateKey);
 
-      // 3. Fetch all Announcements from Monad
-      const logs = await publicClient.getLogs({
-        address: REGISTRY_ADDRESS as `0x${string}`,
-        event: {
-          type: "event",
-          name: "Announcement",
-          inputs: [
-            { type: "address", name: "caller", indexed: true },
-            { type: "address", name: "stealthAddr", indexed: true },
-            { type: "bytes", name: "ephemeralPubKey", indexed: false },
-            { type: "bytes", name: "metadata", indexed: false },
-          ],
-        },
-        fromBlock: 0n,
-        toBlock: "latest",
-      });
+      // 3. Fetch all Announcements from Monad in 100-block chunks
+      //    (Monad RPC limits eth_getLogs to a 100-block range per request)
+      const CHUNK = 100n;
+      const latestBlock = await publicClient.getBlockNumber();
+      // Contract deployed relatively recently — start from a reasonable origin.
+      // Adjust CONTRACT_DEPLOY_BLOCK if you know the exact block number.
+      const CONTRACT_DEPLOY_BLOCK = 0n;
+
+      const announcementEvent = {
+        type: "event" as const,
+        name: "Announcement",
+        inputs: [
+          { type: "address", name: "caller", indexed: true },
+          { type: "address", name: "stealthAddr", indexed: true },
+          { type: "bytes", name: "ephemeralPubKey", indexed: false },
+          { type: "bytes", name: "metadata", indexed: false },
+        ],
+      };
+
+      const logs: any[] = [];
+      for (let from = CONTRACT_DEPLOY_BLOCK; from <= latestBlock; from += CHUNK) {
+        const to = from + CHUNK - 1n < latestBlock ? from + CHUNK - 1n : latestBlock;
+        const chunk = await publicClient.getLogs({
+          address: REGISTRY_ADDRESS as `0x${string}`,
+          event: announcementEvent,
+          fromBlock: from,
+          toBlock: to,
+        });
+        logs.push(...chunk);
+      }
 
       // 4. Decrypt / Scan logs
       const found: any[] = [];
