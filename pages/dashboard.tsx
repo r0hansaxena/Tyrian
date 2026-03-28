@@ -297,19 +297,37 @@ export default function DashboardPage() {
       };
 
       const totalBlocks = latestBlock - CONTRACT_DEPLOY_BLOCK;
+      const totalChunks = Number(totalBlocks / CHUNK) + 1;
+      
       const logs: any[] = [];
       setScanProgress(0);
-      for (let from = CONTRACT_DEPLOY_BLOCK; from <= latestBlock; from += CHUNK) {
-        const to = from + CHUNK - 1n < latestBlock ? from + CHUNK - 1n : latestBlock;
-        const chunk = await publicClient.getLogs({
-          address: REGISTRY_ADDRESS as `0x${string}`,
-          event: announcementEvent,
-          fromBlock: from,
-          toBlock: to,
-        });
-        logs.push(...chunk);
-        const pct = Number(((from - CONTRACT_DEPLOY_BLOCK) * 100n) / totalBlocks);
-        setScanProgress(pct);
+
+      // Fetch in concurrent batches to drop execution time to seconds
+      const BATCH_SIZE = 100;
+      let chunksProcessed = 0;
+
+      for (let i = 0; i < totalChunks; i += BATCH_SIZE) {
+        const batchPromises = [];
+        for (let j = 0; j < BATCH_SIZE && i + j < totalChunks; j++) {
+          const from = CONTRACT_DEPLOY_BLOCK + BigInt(i + j) * CHUNK;
+          const to = from + CHUNK - 1n < latestBlock ? from + CHUNK - 1n : latestBlock;
+          batchPromises.push(
+            publicClient.getLogs({
+              address: REGISTRY_ADDRESS as `0x${string}`,
+              event: announcementEvent,
+              fromBlock: from,
+              toBlock: to,
+            })
+          );
+        }
+
+        const batchResults = await Promise.all(batchPromises);
+        for (const res of batchResults) {
+          logs.push(...res);
+        }
+
+        chunksProcessed += batchPromises.length;
+        setScanProgress(Math.floor((chunksProcessed / totalChunks) * 100));
       }
       setScanProgress(100);
 
