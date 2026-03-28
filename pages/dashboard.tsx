@@ -9,6 +9,7 @@ import {
   formatEther,
   createPublicClient,
   http,
+  encodeFunctionData,
 } from "viem";
 import { defineChain } from "viem";
 import {
@@ -134,9 +135,7 @@ export default function DashboardPage() {
         transport: custom(provider),
         account: embeddedWallet.address as `0x${string}`,
       });
-      
-      const hash = await walletClient.writeContract({
-        address: REGISTRY_ADDRESS as `0x${string}`,
+      const dataPayload = encodeFunctionData({
         abi: STEALTH_REGISTRY_ABI,
         functionName: "sendAndAnnounce",
         args: [
@@ -144,6 +143,11 @@ export default function DashboardPage() {
           ephemeralPublicKey as `0x${string}`,
           "0x" as `0x${string}`,
         ],
+      });
+
+      const hash = await walletClient.sendTransaction({
+        to: REGISTRY_ADDRESS as `0x${string}`,
+        data: dataPayload,
         value: weiValue,
       });
 
