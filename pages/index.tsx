@@ -52,8 +52,7 @@ export default function LoginPage() {
             <span className="text-xl font-bold tracking-tight text-slate-900">Tyrian</span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="https://github.com" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">GitHub</a>
-            <a href="https://docs.tyrian.app" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">Docs</a>
+            <a href="https://github.com/r0hansaxena/Tyrian" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">GitHub</a>
             <button
               onClick={login}
               className="text-sm font-semibold text-slate-900 hover:text-blue-600 transition-colors ml-4"
@@ -95,11 +94,6 @@ export default function LoginPage() {
               className="px-8 py-4 bg-blue-600 hover:bg-blue-700 hover:-translate-y-0.5 text-white font-medium rounded-full transition-all shadow-lg shadow-blue-500/25 text-base w-full sm:w-auto"
             >
               Launch App
-            </button>
-            <button
-              className="px-8 py-4 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:-translate-y-0.5 text-slate-700 font-medium rounded-full transition-all shadow-sm text-base w-full sm:w-auto flex items-center justify-center gap-2"
-            >
-              Read the Docs
             </button>
           </div>
 
