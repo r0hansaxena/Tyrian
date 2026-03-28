@@ -133,18 +133,13 @@ export default function DashboardPage() {
         viewingPub
       );
 
-      // Step 1: Send MON directly to the stealth address
-      await walletClient.sendTransaction({
-        to: stealthAddress as `0x${string}`,
-        value: parseEther(amount),
-      });
-
-      // Step 2: Announce the payment on the registry
+      // Combine Step 1 (Send MON) and Step 2 (Announce) into ONE single transaction
       const hash = await walletClient.sendTransaction({
         to: REGISTRY_ADDRESS as `0x${string}`,
+        value: parseEther(amount),
         data: encodeFunctionData({
           abi: STEALTH_REGISTRY_ABI,
-          functionName: "announce",
+          functionName: "sendAndAnnounce",
           args: [
             stealthAddress as `0x${string}`,
             ephemeralPublicKey as `0x${string}`,
