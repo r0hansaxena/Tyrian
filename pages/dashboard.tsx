@@ -109,14 +109,20 @@ export default function DashboardPage() {
       });
 
       // Fetch recipient's registered stealth keys from the contract
-      const recipientKeys = await publicClient.readContract({
+      // Solidity getter for mapping(address => bytes[2]) takes (address, uint256)
+      const spendingPub = await publicClient.readContract({
         address: REGISTRY_ADDRESS as `0x${string}`,
         abi: STEALTH_REGISTRY_ABI,
         functionName: "stealthKeys",
-        args: [recipient as `0x${string}`],
-      });
+        args: [recipient as `0x${string}`, 0n],
+      }) as string;
 
-      const [spendingPub, viewingPub] = recipientKeys as [string, string];
+      const viewingPub = await publicClient.readContract({
+        address: REGISTRY_ADDRESS as `0x${string}`,
+        abi: STEALTH_REGISTRY_ABI,
+        functionName: "stealthKeys",
+        args: [recipient as `0x${string}`, 1n],
+      }) as string;
 
       if (!spendingPub || spendingPub === "0x") {
         throw new Error("Recipient has not registered their Stealth Profile!");
@@ -127,12 +133,18 @@ export default function DashboardPage() {
         viewingPub
       );
 
+      // Step 1: Send MON directly to the stealth address
+      await walletClient.sendTransaction({
+        to: stealthAddress as `0x${string}`,
+        value: parseEther(amount),
+      });
+
+      // Step 2: Announce the payment on the registry
       const hash = await walletClient.sendTransaction({
         to: REGISTRY_ADDRESS as `0x${string}`,
-        value: parseEther(amount),
         data: encodeFunctionData({
           abi: STEALTH_REGISTRY_ABI,
-          functionName: "sendAndAnnounce",
+          functionName: "announce",
           args: [
             stealthAddress as `0x${string}`,
             ephemeralPublicKey as `0x${string}`,

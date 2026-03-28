@@ -15,23 +15,23 @@ export const STEALTH_REGISTRY_ABI = [
   {
     type: "function",
     name: "stealthKeys",
-    inputs: [{ name: "", type: "address" }],
-    outputs: [
-      { name: "", type: "bytes" },
-      { name: "", type: "bytes" },
+    inputs: [
+      { name: "", type: "address" },
+      { name: "", type: "uint256" },
     ],
+    outputs: [{ name: "", type: "bytes" }],
     stateMutability: "view",
   },
   {
     type: "function",
-    name: "sendAndAnnounce",
+    name: "announce",
     inputs: [
       { name: "stealthAddr", type: "address" },
       { name: "ephemeralPubKey", type: "bytes" },
       { name: "metadata", type: "bytes" },
     ],
     outputs: [],
-    stateMutability: "payable",
+    stateMutability: "nonpayable",
   },
   {
     type: "event",
