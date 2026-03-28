@@ -65,6 +65,7 @@ export default function DashboardPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [regTxHash, setRegTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
 
@@ -89,6 +90,7 @@ export default function DashboardPage() {
     e.preventDefault();
     setError(null);
     setTxHash(null);
+    setRegTxHash(null);
 
     if (!embeddedWallet) {
       setError("Wallet not ready. Please wait a moment.");
@@ -109,7 +111,6 @@ export default function DashboardPage() {
       });
 
       // Fetch recipient's registered stealth keys from the contract
-      // Solidity getter for mapping(address => bytes[2]) takes (address, uint256)
       const spendingPub = await publicClient.readContract({
         address: REGISTRY_ADDRESS as `0x${string}`,
         abi: STEALTH_REGISTRY_ABI,
@@ -173,6 +174,7 @@ export default function DashboardPage() {
     setIsRegistering(true);
     setError(null);
     setTxHash(null);
+    setRegTxHash(null);
     try {
       const provider = await embeddedWallet.getEthereumProvider();
       const walletClient = createWalletClient({
@@ -197,8 +199,7 @@ export default function DashboardPage() {
           keys.viewingPublicKey as `0x${string}`,
         ],
       });
-      setTxHash(hash);
-      setTimeout(() => alert("Profile Registration submitted to Monad!"), 500);
+      setRegTxHash(hash);
     } catch (err: any) {
       console.error(err);
       setError("Registration failed: " + (err.message || "Unknown error"));
@@ -425,7 +426,7 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* Success */}
+                {/* Success - Payment */}
                 {txHash && (
                   <div className="flex items-center justify-between p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                     <p className="text-xs text-green-300">
@@ -505,6 +506,26 @@ export default function DashboardPage() {
                 </button>
               </div>
             </div>
+
+            {/* Success - Registration */}
+            {regTxHash && (
+              <div className="flex items-center justify-between p-3 rounded-lg bg-[#836EF9]/10 border border-[#836EF9]/20 mb-6">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-400" />
+                  <p className="text-xs text-white">
+                    Profile Registered on Monad! You can now receive stealth payments.
+                  </p>
+                </div>
+                <a
+                  href={`${MONAD_EXPLORER}/tx/${regTxHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-[#836EF9] hover:underline"
+                >
+                  View Details →
+                </a>
+              </div>
+            )}
 
             {scannedPayments === null ? (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-zinc-800 border border-zinc-700 mb-4">
