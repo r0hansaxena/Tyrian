@@ -39,7 +39,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         />
       </Head>
       <PrivyProvider
-        appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ""}
+        appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || "cmn9zae4a021d0cjufk2rdzh6"}
         config={{
           defaultChain: monadTestnet,
           supportedChains: [monadTestnet],

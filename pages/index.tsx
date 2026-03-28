@@ -9,9 +9,12 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   const cookieAuthToken = req.cookies["privy-token"];
   if (!cookieAuthToken) return { props: {} };
 
-  const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+  const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID || "cmn9zae4a021d0cjufk2rdzh6";
   const PRIVY_APP_SECRET = process.env.PRIVY_APP_SECRET;
-  const client = new PrivyClient(PRIVY_APP_ID!, PRIVY_APP_SECRET!);
+
+  if (!PRIVY_APP_SECRET) return { props: {} };
+
+  const client = new PrivyClient(PRIVY_APP_ID, PRIVY_APP_SECRET);
 
   try {
     await client.verifyAuthToken(cookieAuthToken);
