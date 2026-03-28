@@ -34,6 +34,17 @@ export const STEALTH_REGISTRY_ABI = [
     stateMutability: "nonpayable",
   },
   {
+    type: "function",
+    name: "sendAndAnnounce",
+    inputs: [
+      { name: "stealthAddr", type: "address" },
+      { name: "ephemeralPubKey", type: "bytes" },
+      { name: "metadata", type: "bytes" },
+    ],
+    outputs: [],
+    stateMutability: "payable",
+  },
+  {
     type: "event",
     name: "Announcement",
     inputs: [

@@ -3,24 +3,21 @@
 @tailwind utilities;
 
 :root {
-  --tyrian-purple: #836EF9;
-  --background: #0a0a0f;
-}
-
-* {
-  box-sizing: border-box;
+  --tyrian-indigo: #4f46e5;
+  --background: #ffffff;
+  --foreground: #0f172a;
 }
 
 body {
   background-color: var(--background);
-  color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--foreground);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background-color: var(--tyrian-purple);
+  background-color: var(--tyrian-indigo);
   color: white;
 }
 
