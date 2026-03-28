@@ -169,6 +169,54 @@ export default function DashboardPage() {
   const [scannedPayments, setScannedPayments] = useState<any[] | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+  const [sweepingId, setSweepingId] = useState<string | null>(null);
+
+  const handleSweep = async (payment: any) => {
+    if (!embeddedWallet) return;
+    setSweepingId(payment.id);
+    setError(null);
+    try {
+      const { privateKeyToAccount } = await import("viem/accounts");
+      // Add standard "0x" prefix if stealthPrivateKey is missing it
+      const privKey = payment.stealthPrivateKey.startsWith("0x") ? payment.stealthPrivateKey : `0x${payment.stealthPrivateKey}`;
+      const account = privateKeyToAccount(privKey as `0x${string}`);
+
+      const walletClient = createWalletClient({
+        account,
+        chain: monadTestnet,
+        transport: http("https://testnet-rpc.monad.xyz"),
+      });
+
+      const gas = 21000n; // Basic transfer gas
+      const gasPrice = await publicClient.getGasPrice();
+      const fee = gas * gasPrice;
+      
+      const bal = parseEther(payment.amount);
+      const sweepAmount = bal - fee;
+      
+      if (sweepAmount <= 0n) {
+        throw new Error("Balance too low to cover gas fees for sweeping.");
+      }
+
+      const hash = await walletClient.sendTransaction({
+        to: embeddedWallet.address as `0x${string}`,
+        value: sweepAmount,
+      });
+      
+      // We can reuse setTxHash to show the success banner
+      setTxHash(hash);
+      
+      // Mark as swept in UI
+      setScannedPayments((prev) => 
+        prev ? prev.map((p) => p.id === payment.id ? { ...p, swept: true } : p) : null
+      );
+    } catch (err: any) {
+      console.error(err);
+      setError("Sweep failed: " + (err.message || "Unknown error"));
+    } finally {
+      setSweepingId(null);
+    }
+  };
 
   const handleRegisterProfile = async () => {
     if (!embeddedWallet) return;
@@ -272,7 +320,7 @@ export default function DashboardPage() {
         if (!ephemeralPubKey || !stealthAddr) continue;
 
         try {
-          const { stealthAddress: derivedAddr } = checkAndDeriveStealth(
+          const { stealthAddress: derivedAddr, stealthPrivateKey } = checkAndDeriveStealth(
             ephemeralPubKey,
             keys.viewingPrivateKey,
             keys.spendingPrivateKey,
@@ -293,6 +341,7 @@ export default function DashboardPage() {
                 amount: formatEther(bal),
                 sender: caller?.slice(0, 6) + "...",
                 swept: bal === 0n,
+                stealthPrivateKey,
               });
             }
           }
@@ -595,9 +644,17 @@ export default function DashboardPage() {
                           {p.swept ? (
                             <span className="text-sm font-semibold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full inline-block">Swept</span>
                           ) : (
-                            <span className="text-sm font-bold text-blue-600 bg-blue-50 border border-blue-100 shadow-sm px-4 py-1.5 rounded-full inline-block">
-                              Available
-                            </span>
+                            <button
+                              onClick={() => handleSweep(p)}
+                              disabled={sweepingId === p.id}
+                              className="text-sm font-bold text-blue-600 bg-blue-50 border border-blue-100 hover:bg-blue-100 shadow-sm px-4 py-1.5 rounded-full inline-flex items-center gap-1.5 disabled:opacity-50 transition-colors"
+                            >
+                              {sweepingId === p.id ? (
+                                <><Loader className="w-3.5 h-3.5 animate-spin" /> Sweeping...</>
+                              ) : (
+                                "Sweep to Wallet"
+                              )}
+                            </button>
                           )}
                         </div>
                       </div>
