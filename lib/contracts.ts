@@ -4,6 +4,26 @@
 export const STEALTH_REGISTRY_ABI = [
   {
     type: "function",
+    name: "registerKeys",
+    inputs: [
+      { name: "spendingPubKey", type: "bytes" },
+      { name: "viewingPubKey", type: "bytes" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "stealthKeys",
+    inputs: [{ name: "", type: "address" }],
+    outputs: [
+      { name: "", type: "bytes" },
+      { name: "", type: "bytes" },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "sendAndAnnounce",
     inputs: [
       { name: "stealthAddr", type: "address" },

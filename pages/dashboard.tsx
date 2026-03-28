@@ -63,6 +63,7 @@ export default function DashboardPage() {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
@@ -107,15 +108,23 @@ export default function DashboardPage() {
         account: embeddedWallet.address as `0x${string}`,
       });
 
-      // Compute stealth address
-      const mockSpendingPub =
-        "0x02" + recipient.replace(/[^a-fA-F0-9]/g, "").padEnd(64, "0");
-      const mockViewingPub =
-        "0x03" + recipient.replace(/[^a-fA-F0-9]/g, "").padEnd(64, "0");
+      // Fetch recipient's registered stealth keys from the contract
+      const recipientKeys = await publicClient.readContract({
+        address: REGISTRY_ADDRESS as `0x${string}`,
+        abi: STEALTH_REGISTRY_ABI,
+        functionName: "stealthKeys",
+        args: [recipient as `0x${string}`],
+      });
+
+      const [spendingPub, viewingPub] = recipientKeys as [string, string];
+
+      if (!spendingPub || spendingPub === "0x") {
+        throw new Error("Recipient has not registered their Stealth Profile!");
+      }
 
       const { stealthAddress, ephemeralPublicKey } = computeStealthAddress(
-        mockSpendingPub,
-        mockViewingPub
+        spendingPub,
+        viewingPub
       );
 
       const hash = await walletClient.sendTransaction({
@@ -151,6 +160,45 @@ export default function DashboardPage() {
 
   const [scannedPayments, setScannedPayments] = useState<any[] | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+
+  const handleRegisterProfile = async () => {
+    if (!embeddedWallet) return;
+    setIsRegistering(true);
+    setError(null);
+    setTxHash(null);
+    try {
+      const provider = await embeddedWallet.getEthereumProvider();
+      const walletClient = createWalletClient({
+        chain: monadTestnet,
+        transport: custom(provider),
+        account: embeddedWallet.address as `0x${string}`,
+      });
+
+      const signature = await walletClient.signMessage({
+        message: "Unlock Tyrian Stealth Inbox. Only sign this on tyrian.app!",
+      });
+      const { keccak256 } = await import("viem");
+      const rootPrivateKey = keccak256(signature);
+      const keys = deriveStealthKeys(rootPrivateKey);
+
+      const hash = await walletClient.writeContract({
+        address: REGISTRY_ADDRESS as `0x${string}`,
+        abi: STEALTH_REGISTRY_ABI,
+        functionName: "registerKeys",
+        args: [
+          keys.spendingPublicKey as `0x${string}`,
+          keys.viewingPublicKey as `0x${string}`,
+        ],
+      });
+      setTxHash(hash);
+      setTimeout(() => alert("Profile Registration submitted to Monad!"), 500);
+    } catch (err: any) {
+      console.error(err);
+      setError("Registration failed: " + (err.message || "Unknown error"));
+    } finally {
+      setIsRegistering(false);
+    }
+  };
 
   const handleScanNetwork = async () => {
     if (!embeddedWallet) return;
@@ -420,22 +468,35 @@ export default function DashboardPage() {
               <div>
                 <h2 className="text-2xl font-bold">Your Private Inbox</h2>
                 <p className="text-zinc-400 mt-1 text-sm">
-                  Scan the Monad registry for funds sent to your stealth
-                  addresses.
+                  Register your meta-address or scan the Monad registry for funds.
                 </p>
               </div>
-              <button
-                onClick={handleScanNetwork}
-                disabled={isScanning || !walletReady}
-                className="px-5 py-2 rounded-full bg-[#836EF9] hover:bg-[#7059e6] transition-colors text-white text-sm font-medium flex items-center gap-2 disabled:opacity-70"
-              >
-                {isScanning ? (
-                  <Loader className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Search className="w-4 h-4" />
-                )}
-                {isScanning ? "Scanning Monad..." : "Scan Network"}
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 mt-4 md:mt-0">
+                <button
+                  onClick={handleRegisterProfile}
+                  disabled={isRegistering || !walletReady}
+                  className="px-5 py-2 rounded-full border border-[#836EF9]/40 hover:bg-[#836EF9]/10 transition-colors text-[#836EF9] text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  {isRegistering ? (
+                    <Loader className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="w-4 h-4" />
+                  )}
+                  {isRegistering ? "Registering..." : "Register Profile"}
+                </button>
+                <button
+                  onClick={handleScanNetwork}
+                  disabled={isScanning || !walletReady}
+                  className="px-5 py-2 rounded-full bg-[#836EF9] hover:bg-[#7059e6] transition-colors text-white text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  {isScanning ? (
+                    <Loader className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Search className="w-4 h-4" />
+                  )}
+                  {isScanning ? "Scanning Monad..." : "Scan Network"}
+                </button>
+              </div>
             </div>
 
             {scannedPayments === null ? (

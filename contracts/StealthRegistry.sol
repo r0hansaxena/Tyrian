@@ -16,6 +16,13 @@ pragma solidity ^0.8.20;
  */
 contract StealthRegistry {
 
+    /// @notice Defines the on-chain stealth keys for a user's address.
+    /// [0] = spendingPubKey, [1] = viewingPubKey 
+    mapping(address => bytes[2]) public stealthKeys;
+
+    /// @notice Emitted when a user properly registers their stealth keys.
+    event StealthKeyRegistered(address indexed user, bytes spendingPubKey, bytes viewingPubKey);
+
     /// @notice Emitted when a stealth payment is announced.
     /// @param caller        The address that called announce (the sender).
     /// @param stealthAddr   The one-time stealth address holding the funds.
@@ -27,6 +34,14 @@ contract StealthRegistry {
         bytes   ephemeralPubKey,
         bytes   metadata
     );
+
+    /// @notice Register your official stealth meta-address keys.
+    /// @param spendingPubKey Your highly-secure spending public key.
+    /// @param viewingPubKey Your highly-secure viewing public key.
+    function registerKeys(bytes calldata spendingPubKey, bytes calldata viewingPubKey) external {
+        stealthKeys[msg.sender] = [spendingPubKey, viewingPubKey];
+        emit StealthKeyRegistered(msg.sender, spendingPubKey, viewingPubKey);
+    }
 
     /// @notice Publish an announcement after sending funds to a stealth address.
     /// @param stealthAddr     The stealth address that received the funds.
