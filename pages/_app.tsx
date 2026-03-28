@@ -47,8 +47,8 @@ function MyApp({ Component, pageProps }: AppProps) {
             createOnLogin: "all-users",
           },
           appearance: {
-            theme: "light",
-            accentColor: "#4f46e5",
+            theme: "dark",
+            accentColor: "#836EF9",
           },
         }}
       >

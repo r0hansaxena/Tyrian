@@ -3,7 +3,7 @@ import { PrivyClient } from "@privy-io/server-auth";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { ShieldCheck, Zap, Eye, ArrowRight, Lock, Globe } from "lucide-react";
+import { ShieldCheck, Zap, Eye } from "lucide-react";
 
 export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   const cookieAuthToken = req.cookies["privy-token"];
@@ -37,124 +37,64 @@ export default function LoginPage() {
     <>
       <Head>
         <title>Tyrian | Stealth Payments on Monad</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </Head>
 
-      <main
-        className="min-h-screen text-gray-900 flex flex-col relative overflow-hidden"
-        style={{
-          fontFamily: "'Inter', sans-serif",
-          background: "linear-gradient(180deg, #f0f4ff 0%, #ffffff 40%, #f8faff 100%)",
-        }}
-      >
-        {/* Soft radial glow */}
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] pointer-events-none"
-          style={{
-            background: "radial-gradient(ellipse, rgba(99,102,241,0.08) 0%, transparent 70%)",
-          }}
-        />
+      <main className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
+        {/* Background grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(131,110,249,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(131,110,249,0.03)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none" />
 
-        {/* Navbar */}
-        <nav className="relative z-20 w-full">
-          <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
-              >
-                <Lock className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-lg font-bold tracking-tight text-gray-900">Tyrian</span>
+        {/* Glow */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-[#836EF9] rounded-full blur-[200px] opacity-10 pointer-events-none" />
+
+        <div className="relative z-10 max-w-lg text-center space-y-8">
+          {/* Logo */}
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#836EF9] flex items-center justify-center shadow-[0_0_30px_rgba(131,110,249,0.4)]">
+              <div className="w-3.5 h-3.5 rounded-full bg-white" />
             </div>
-            <div className="flex items-center gap-6">
-              <a href="https://github.com/r0hansaxena/Tyrian" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors">
-                <Globe className="w-4 h-4" />
-                View on GitHub
-              </a>
-            </div>
-          </div>
-        </nav>
-
-        {/* Hero */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-20">
-          <div className="max-w-2xl text-center space-y-6">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-200 bg-white text-sm font-medium text-gray-600 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-indigo-500" />
-              ERC-5564 COMPLIANT · FULLY ON-CHAIN · OPEN SOURCE
-            </div>
-
-            {/* Headline */}
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] text-gray-900">
-              Private Payments.{" "}
-              <span className="italic" style={{ fontFamily: "Georgia, serif", color: "#4f46e5" }}>
-                Stealth
-              </span>{" "}
-              Addresses.
-            </h1>
-
-            <p className="text-gray-500 text-lg leading-relaxed max-w-lg mx-auto">
-              Send crypto to anyone without exposing your wallet — every tool call, key derivation, and state change handled trustlessly on Monad.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex items-center justify-center gap-4 pt-2">
-              <button
-                onClick={login}
-                className="px-7 py-3 rounded-full text-white text-base font-semibold transition-all hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
-                style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)" }}
-              >
-                Launch App <ArrowRight className="w-4 h-4 inline ml-1" />
-              </button>
-              <a
-                href="https://github.com/r0hansaxena/Tyrian"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-7 py-3 rounded-full bg-white border border-gray-200 text-gray-700 text-base font-medium hover:border-gray-300 hover:shadow-sm transition-all"
-              >
-                View on GitHub
-              </a>
-            </div>
+            <span className="text-2xl font-bold tracking-tight">Tyrian</span>
           </div>
 
-          {/* Feature cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-16 max-w-3xl w-full">
-            <div className="rounded-2xl border border-gray-100 bg-white/70 backdrop-blur p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center mb-4">
-                <ShieldCheck className="w-5 h-5 text-indigo-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Stealth Addresses</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                One-time addresses generated via ECDH. Recipients are never revealed on-chain.
-              </p>
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#836EF9]/30 bg-[#836EF9]/10 text-sm text-[#836EF9]">
+            <Zap className="w-3.5 h-3.5" />
+            Powered by Monad
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.1]">
+            Private payments,{" "}
+            <span className="text-[#836EF9]">instant speed.</span>
+          </h1>
+
+          <p className="text-zinc-400 text-lg leading-relaxed max-w-md mx-auto">
+            Send crypto to anyone without exposing your wallet. Stealth addresses powered by Monad's 10,000 TPS parallel execution.
+          </p>
+
+          {/* Login button */}
+          <button
+            onClick={login}
+            className="px-8 py-3.5 bg-[#836EF9] hover:bg-[#7059e6] text-white font-semibold rounded-xl transition-all shadow-[0_0_30px_rgba(131,110,249,0.3)] hover:shadow-[0_0_40px_rgba(131,110,249,0.5)] text-lg"
+          >
+            Launch App →
+          </button>
+
+          {/* Feature pills */}
+          <div className="flex flex-wrap justify-center gap-4 pt-4">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-zinc-300">
+              <ShieldCheck className="w-4 h-4 text-[#836EF9]" />
+              Stealth Addresses
             </div>
-            <div className="rounded-2xl border border-gray-100 bg-white/70 backdrop-blur p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center mb-4">
-                <Eye className="w-5 h-5 text-indigo-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">On-Chain Registry</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                Fully decentralized key registry. No server, no database — just Solidity.
-              </p>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-zinc-300">
+              <Eye className="w-4 h-4 text-[#836EF9]" />
+              On-Chain Privacy
             </div>
-            <div className="rounded-2xl border border-gray-100 bg-white/70 backdrop-blur p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center mb-4">
-                <Zap className="w-5 h-5 text-indigo-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Monad Speed</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                10,000 TPS with 400ms finality. Scan thousands of events in milliseconds.
-              </p>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-zinc-300">
+              <Zap className="w-4 h-4 text-[#836EF9]" />
+              400ms Finality
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <footer className="relative z-10 text-center text-xs text-gray-400 py-6 border-t border-gray-100">
-          Built for the Monad Hackathon · Fully Decentralized · Zero Trust
-        </footer>
       </main>
     </>
   );
